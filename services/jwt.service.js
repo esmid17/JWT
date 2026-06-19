@@ -8,12 +8,24 @@ export class JwtService {
      * @returns {string} El token JWT generado.
      */
     static signToken(payload) {
-        // TODO: Implementar lógica de firmado.
-        // 1. Verificar si config.ALGORITHM es 'RS256' o 'HS256'.
-        // 2. Si es 'RS256', usar config.PRIVATE_KEY.
-        // 3. Si es 'HS256', usar config.JWT_SECRET.
-        // 4. Establecer un tiempo de expiración (ej. 1h).
-        // 5. Retornar el token firmado usando jwt.sign().
+        const alg = (config.ALGORITHM || 'HS256').toUpperCase();
+
+        // Construir payload mínimo requerido: sub, name, exp (1 minuto)
+        const now = Math.floor(Date.now() / 1000);
+        const tokenPayload = {
+            sub: payload.sub || payload.id || 'unknown',
+            name: payload.name || payload.username || 'unknown',
+            exp: now + 60 // 1 minuto
+        };
+
+        if (alg === 'RS256') {
+            if (!config.PRIVATE_KEY) throw new Error('PRIVATE_KEY no configurada en env');
+            return jwt.sign(tokenPayload, config.PRIVATE_KEY, { algorithm: 'RS256' });
+        }
+
+        // Por defecto HS256
+        if (!config.JWT_SECRET) throw new Error('JWT_SECRET no configurado en env');
+        return jwt.sign(tokenPayload, config.JWT_SECRET, { algorithm: 'HS256' });
     }
 
     /**
@@ -22,11 +34,18 @@ export class JwtService {
      * @returns {Object|null} El payload decodificado o null si es inválido.
      */
     static verifyToken(token) {
-        // TODO: Implementar lógica de verificación.
-        // 1. Verificar si config.ALGORITHM es 'RS256' o 'HS256'.
-        // 2. Si es 'RS256', usar config.PUBLIC_KEY para verificar.
-        // 3. Si es 'HS256', usar config.JWT_SECRET para verificar.
-        // 4. Retornar el payload decodificado usando jwt.verify().
-        // 5. Manejar posibles errores (token expirado, firma inválida) y retornar null.
+        const alg = (config.ALGORITHM || 'HS256').toUpperCase();
+        let key;
+        if (alg === 'RS256') {
+            if (!config.PUBLIC_KEY) throw new Error('PUBLIC_KEY no configurada en env');
+            key = config.PUBLIC_KEY;
+        } else {
+            if (!config.JWT_SECRET) throw new Error('JWT_SECRET no configurado en env');
+            key = config.JWT_SECRET;
+        }
+
+        // Permitimos que jwt.verify lance errores y el middleware los maneje.
+        const decoded = jwt.verify(token, key, { algorithms: [alg] });
+        return decoded;
     }
 }
