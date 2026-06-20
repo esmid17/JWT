@@ -14,3 +14,56 @@
 - Nunca almacenar Refresh Tokens en `localStorage` o `sessionStorage` si se pretende proteger contra XSS; usar cookies seguras y CSRF mitigations cuando corresponda.
 
 ---
+
+## Observabilidad y Sentry (Práctica 2)
+
+Instrucciones para instrumentar el proyecto con Sentry y verificar la captura de errores:
+
+- Crear un proyecto en https://sentry.io para la plataforma **Node.js / Express** y copiar el `DSN`.
+- Añadir localmente un archivo `.env` (NO comitear) con al menos las variables:
+
+	- `PORT=3000`
+	- `JWT_SECRET=...`
+	- `SENTRY_DSN=tu_dsn_aqui`
+	- `NODE_ENV=development`
+
+- Flujo Git recomendado (hacer estos pasos en tu máquina):
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/observabilidad-sentry
+```
+
+- Dependencias: se añadió `@sentry/node` y se creó `src/instrument.js` que inicializa Sentry lo más pronto posible.
+- En `index.js` la importación de `src/instrument.js` se realiza antes de cargar Express; los handlers de Sentry se registran adecuadamente.
+
+Cómo probar los endpoints y diferenciar errores:
+
+- Error operacional (debe aparecer en Sentry):
+
+	- Llamar a `/v1/service-alpha/private` con el parámetro `?fail=true` o el header `x-simulate-fail: 1`.
+	- Ejemplo:
+
+		```bash
+		curl -i -H "Authorization: Bearer <TOKEN>" "http://localhost:3000/v1/service-alpha/private?fail=true"
+		```
+
+- Error lógico (no debe generar alerta crítica en Sentry):
+
+	- Enviar un token expirado o malformado al mismo endpoint; el middleware responde `401` o `403` según corresponda.
+
+- Captura explícita con contexto (tags/extra):
+
+	- `service-beta` realiza `Sentry.captureException(err)` y añade `tags` y `extra` con `userId` (sin enviar datos sensibles).
+
+Buenas prácticas de entrega:
+
+- No subir `.env` al repositorio. Usar `.env.example` para documentar variables necesarias.
+- Hacer commits semánticos como:
+
+	- `chore: instalar dependencias de sentry`
+	- `feat: añadir instrument.js e inicializar sdk antes de express`
+	- `refactor: separar manejo de errores lógicos 401 de operacionales 500`
+	- `feat: simular caida en service-alpha para verificar error tracking`
+	- `docs: actualizar README con pasos para la práctica 2 (Sentry, pruebas y ramas)`
