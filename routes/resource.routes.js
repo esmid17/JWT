@@ -18,4 +18,9 @@ router.get('/sentry-debug', (req, res) => {
 	return res.json({ eventId });
 });
 
+// Ruta de prueba que lanza una excepción no capturada para que el middleware de Sentry la recoja
+router.get('/sentry-throw', (req, res) => {
+	throw new Error('Simulated operational failure for Sentry (/sentry-throw)');
+});
+
 export default router;
