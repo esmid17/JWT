@@ -43,11 +43,6 @@ Cómo probar los endpoints y diferenciar errores:
 - Error operacional (debe aparecer en Sentry):
 
 	- Llamar a `/v1/service-alpha/private` con el parámetro `?fail=true` o el header `x-simulate-fail: 1`.
-	- Ejemplo:
-
-		```bash
-		curl -i -H "Authorization: Bearer <TOKEN>" "http://localhost:3000/v1/service-alpha/private?fail=true"
-		```
 
 - Error lógico (no debe generar alerta crítica en Sentry):
 
@@ -56,14 +51,3 @@ Cómo probar los endpoints y diferenciar errores:
 - Captura explícita con contexto (tags/extra):
 
 	- `service-beta` realiza `Sentry.captureException(err)` y añade `tags` y `extra` con `userId` (sin enviar datos sensibles).
-
-Buenas prácticas de entrega:
-
-- No subir `.env` al repositorio. Usar `.env.example` para documentar variables necesarias.
-- Hacer commits semánticos como:
-
-	- `chore: instalar dependencias de sentry`
-	- `feat: añadir instrument.js e inicializar sdk antes de express`
-	- `refactor: separar manejo de errores lógicos 401 de operacionales 500`
-	- `feat: simular caida en service-alpha para verificar error tracking`
-	- `docs: actualizar README con pasos para la práctica 2 (Sentry, pruebas y ramas)`
