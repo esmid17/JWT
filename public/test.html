@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<body>
+  <h3>JWT + Sentry test</h3>
+  <button id="getToken">Obtener token</button>
+  <button id="alphaNormal">Alpha - Normal</button>
+  <button id="alphaFail">Alpha - Forzar fallo</button>
+  <pre id="out"></pre>
+<script>
+let TOKEN = '';
+
+async function postJson(url, body){
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+document.getElementById('getToken').onclick = async () => {
+  try {
+    const data = await postJson('http://localhost:3000/auth/token', { username:'admin', password:'password' });
+    TOKEN = data.token;
+    document.getElementById('out').textContent = 'TOKEN: ' + TOKEN;
+  } catch (e) { document.getElementById('out').textContent = 'Error generando token: ' + e; }
+};
+
+async function callAlpha(fail){
+  try {
+    const url = 'http://localhost:3000/v1/service-alpha/private' + (fail ? '?fail=true' : '');
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    const text = await res.text();
+    document.getElementById('out').textContent = res.status + '\\n' + text;
+  } catch (e) { document.getElementById('out').textContent = 'Fetch error: ' + e; }
+}
+
+document.getElementById('alphaNormal').onclick = () => callAlpha(false);
+document.getElementById('alphaFail').onclick = () => callAlpha(true);
+</script>
+</body>
+</html>
